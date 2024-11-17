@@ -88,7 +88,7 @@ for company in urls:
             print(f"Address element not found for URL: {url}. Trying next.")
         except WebDriverException as e:
             print(f"Failed to access URL: {url}. Error: {e}")
-
+    
     if not success:
         print(f"Address not found for {company_name} after trying all suffixes.")
 
