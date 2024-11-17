@@ -25,6 +25,43 @@ def format_company_name(company):
 
     return formatted_name
 
+# Function to find email address when it's not in a 'mailto:' href
+def find_email_using_text(driver):
+    email = "Not found"
+    try:
+        # Get all the visible text on the page
+        body_text = driver.find_element(By.TAG_NAME, "body").text
+        
+        # Regex pattern to match common email formats (simple pattern)
+        email_pattern = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
+        match = re.search(email_pattern, body_text)
+        if match:
+            email = match.group()  # Return the first match found
+    except NoSuchElementException:
+        pass  # Keep default "Not found" if no element is found
+
+    return email
+
+def find_phone_number_using_phonenumbers(driver):
+    phone_number = "Not found"
+    try:
+        # Get all the visible text on the page
+        body_text = driver.find_element(By.TAG_NAME, "body").text
+        
+        # Search for phone numbers using phonenumbers library
+        possible_numbers = phonenumbers.PhoneNumberMatcher(body_text, "US")  # Default region is 'US'; adjust as necessary
+        
+        # Iterate over possible numbers found and format them
+        for match in possible_numbers:
+            number = match.number
+            if phonenumbers.is_valid_number(number):
+                phone_number = phonenumbers.format_number(number, phonenumbers.PhoneNumberFormat.INTERNATIONAL)
+                break  # Stop at the first valid phone number
+    except NoSuchElementException:
+        pass  # Keep "Not found" if element not found
+    return phone_number
+
+
 def find_phone_number_using_regex(driver):
     phone_number = "Not found"
     try:
@@ -172,11 +209,14 @@ for link in links:
                 phone_number = phone.get_attribute('alt')
             except NoSuchElementException:
                 try:
-                    phone_number = find_phone_number_using_regex(driver)
+                    phone_number = find_phone_number_using_phonenumbers(driver)
                 except NoSuchElementException:
-                    pass  # Keep default "Not found" if no phone is found
-
+                    try:
+                        phone_number = find_phone_number_using_regex(driver)
+                    except NoSuchElementException:
+                        pass  # Keep default "Not found" if no phone is found
         phone_numbers.append(phone_number)
+
 
         # Scrape email
         email = "Not found"  # Default value if no email is found
