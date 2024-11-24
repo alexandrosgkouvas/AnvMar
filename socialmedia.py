@@ -1,13 +1,3 @@
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import WebDriverException, NoSuchElementException
-from selenium import webdriver
-
-import pandas as pd
-import time
-from urllib.parse import quote
-
 # Function to format company names into valid URL segments
 def format_company_name(company):
     if company.endswith("."):

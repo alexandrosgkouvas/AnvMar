@@ -1,12 +1,3 @@
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import WebDriverException, NoSuchElementException  # Import exceptions
-from selenium import webdriver  # Importing webdriver here
-
-import pandas as pd
-import time
-from urllib.parse import quote
 url = "https://www.sialparis.com/en/EXHIBITORS-2024/exhibitor/KRACO-3"
 
 driver = webdriver.Chrome()

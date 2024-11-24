@@ -1,14 +1,3 @@
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import WebDriverException, NoSuchElementException
-from selenium import webdriver 
-import phonenumbers
-import re
-import pandas as pd
-import time
-from urllib.parse import quote
-
 # Function to format company names into valid URL segments
 def format_company_name(company):
     if company.endswith("."):
@@ -77,7 +66,9 @@ def find_phone_number_using_regex(driver):
         pass
     return phone_number
 
-
+options = webdriver.ChromeOptions()
+options.add_experimental_option(name="detach", value=True)
+driver = webdriver.Chrome(options=options)
 company_names = []
 addresses = []  # Added list to store addresses
 links = []
@@ -87,7 +78,15 @@ country = input("Select country: ")
 # Scroll and Click the "See More Exhibitors" button to load all exhibitors
 driver = webdriver.Chrome()
 driver.get(f"https://www.sialparis.com/en/EXHIBITORS-2024/exhibitors?catalog.prod.sial.exhibitors.en.name-asc%5BrefinementList%5D%5Baddress.country%5D%5B0%5D={country}")
-
+try:
+        cookie_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.ID, "onetrust-accept-btn-handler"))
+        )
+        cookie_button.click()
+except NoSuchElementException:
+        print("No cookie consent button found.")
+except Exception as e:
+        print(f"Error handling cookie consent: {e}")
 while True:
     try:
         see_more_exhibitors = WebDriverWait(driver, 10).until(
@@ -101,21 +100,17 @@ while True:
         break
 # After all content is loaded, scroll to the bottom to ensure all content is visible
 driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-time.sleep(3)  # Wait to make sure all content is loaded
 company_name_elements = driver.find_elements(By.XPATH, '//*[@id="catalog-v2"]//h3[contains(@class, "CatalogCardLine-title")]/div/span/span')
 for element in company_name_elements:
     company_names.append(element.text)
 
 print(company_names)
-driver.quit()
 
 # Format URLs for each company
 urls = [quote(format_company_name(company)) for company in company_names]
 for company in urls:
     url = f"https://www.sialparis.com/en/EXHIBITORS-2024/exhibitor/{company}"
-    options = webdriver.ChromeOptions()
-    options.add_experimental_option(name="detach", value=True)
-    driver = webdriver.Chrome(options=options)
+    
 
     success = False
     address_found = False
@@ -130,8 +125,13 @@ for company in urls:
 
         try:
             driver.get(url)
-            time.sleep(3)
-
+            WebDriverWait(driver, 10).until(
+    EC.presence_of_element_located((By.TAG_NAME, 'body'))
+)
+            
+            address = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, '//*[@id="catalog-v2"]/div[1]/div[1]/section[2]/div[2]/div[2]/div[1]/p'))
+            ).text
             # Reset the address and link before attempting to find them
             current_address = "Not found"
             current_link = "No link found"
@@ -162,7 +162,6 @@ for company in urls:
     if not success:
         print(f"Address and link not found for {company}.")
 
-    driver.quit()
 
 phone_numbers = []
 emails = []
@@ -172,16 +171,15 @@ twitter_links = []
 youtube_links = []
 
 # Open browser for scraping additional details
-options = webdriver.ChromeOptions()
-options.add_experimental_option("detach", True)
-driver = webdriver.Chrome(options=options)
+
 
 for link in links:
     try:
         driver.get(link)
-        time.sleep(3)  # Wait for the page to load
+        WebDriverWait(driver, 20).until(
+        EC.presence_of_element_located((By.TAG_NAME, 'body'))
+        )
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(2)  # Wait for page to load after scroll
 
         # Scrape telephone number
         phone_number = "Not found"  # Default value if no phone number is found
@@ -229,7 +227,7 @@ for link in links:
 
         try:
             facebook = driver.find_element(By.XPATH, "//a[contains(@href, 'facebook.com')]")
-            time.sleep(3)
+            
             facebook_link = facebook.get_attribute('href')
         except NoSuchElementException:
             pass  # Keep default "Not found"
@@ -284,6 +282,6 @@ data = {
 df = pd.DataFrame(data)
 
 # Save to Excel
-df.to_excel(f'{country}.xlsx', index=False)
+df.to_excel(f'Turkey.xlsx', index=False)
 
 driver.quit()

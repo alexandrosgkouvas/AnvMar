@@ -7,7 +7,7 @@ import re
 import pandas as pd
 import time
 from urllib.parse import quote
-
+import phonenumbers
 # Function to format company names into valid URL segments
 def format_company_name(company):
     if company.endswith("."):
